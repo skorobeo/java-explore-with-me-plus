@@ -10,6 +10,4 @@
     </parent>
     <artifactId>ewm-main-service</artifactId>
     <name>Main Service</name>
-    <dependencies>
-        </dependencies>
 </project>
