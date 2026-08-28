@@ -24,6 +24,7 @@ public class StatsClientTest {
         mockHttpClient = Mockito.mock(HttpClient.class);
         mockResponse = Mockito.mock(HttpResponse.class);
     }
+
     @Test
     void saveHitIsOkTest() throws Exception {
         StatsClient statsClient = new StatsClient("http://localhost:9090", mockHttpClient);
