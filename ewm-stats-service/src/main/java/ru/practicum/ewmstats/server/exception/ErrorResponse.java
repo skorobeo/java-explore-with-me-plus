@@ -1,4 +1,4 @@
-package ru.practicum.evmstats.server.exception;
+package ru.practicum.ewmstats.server.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;

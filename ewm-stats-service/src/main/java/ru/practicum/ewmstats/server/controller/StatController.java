@@ -1,11 +1,11 @@
-package ru.practicum.evmstats.server.controller;
+package ru.practicum.ewmstats.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.evmstats.server.exception.BadRequestException;
-import ru.practicum.evmstats.server.service.StatService;
+import ru.practicum.ewmstats.server.exception.BadRequestException;
+import ru.practicum.ewmstats.server.service.StatService;
 import ru.practicum.ewmstats.dto.EndpointHit;
 import ru.practicum.ewmstats.dto.ViewStats;
 

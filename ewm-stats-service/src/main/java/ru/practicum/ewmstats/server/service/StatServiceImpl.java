@@ -1,10 +1,10 @@
-package ru.practicum.evmstats.server.service;
+package ru.practicum.ewmstats.server.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.evmstats.server.mapper.HitMapper;
-import ru.practicum.evmstats.server.repository.StatRepository;
+import ru.practicum.ewmstats.server.mapper.HitMapper;
+import ru.practicum.ewmstats.server.repository.StatRepository;
 import ru.practicum.ewmstats.dto.EndpointHit;
 import ru.practicum.ewmstats.dto.ViewStats;
 

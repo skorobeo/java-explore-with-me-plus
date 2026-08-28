@@ -1,6 +1,6 @@
-package ru.practicum.evmstats.server.mapper;
+package ru.practicum.ewmstats.server.mapper;
 
-import ru.practicum.evmstats.server.model.Hit;
+import ru.practicum.ewmstats.server.model.Hit;
 import ru.practicum.ewmstats.dto.EndpointHit;
 
 public class HitMapper {

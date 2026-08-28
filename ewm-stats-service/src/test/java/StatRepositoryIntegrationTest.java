@@ -5,9 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import ru.practicum.evmstats.server.StatsServiceApp;
-import ru.practicum.evmstats.server.model.Hit;
-import ru.practicum.evmstats.server.repository.StatRepository;
+import ru.practicum.ewmstats.server.StatsServiceApp;
+import ru.practicum.ewmstats.server.model.Hit;
+import ru.practicum.ewmstats.server.repository.StatRepository;
 import ru.practicum.ewmstats.dto.ViewStats;
 
 import java.time.LocalDateTime;
