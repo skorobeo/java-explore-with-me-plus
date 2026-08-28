@@ -13,7 +13,7 @@ public interface StatRepository extends JpaRepository<Hit, Long> {
 
     @Query("""
        select new ru.practicum.ewmstats.dto.ViewStats(h.app, h.uri, COUNT(distinct h.ip))
-       from Hit h 
+       from Hit h
        where h.timestamp between :start and :end
        and (:uris is null or h.uri in :uris)
        group by h.app, h.uri
@@ -25,7 +25,7 @@ public interface StatRepository extends JpaRepository<Hit, Long> {
 
     @Query("""
        select new ru.practicum.ewmstats.dto.ViewStats(h.app, h.uri, COUNT(h.ip))
-       from Hit h 
+       from Hit h
        where h.timestamp between :start and :end
        and (:uris is null or h.uri in :uris)
        group by h.app, h.uri
