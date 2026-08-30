@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewmstats.dto.EndpointHit;
 import ru.practicum.ewmstats.dto.ViewStats;
+import ru.practicum.explore.client.exceptions.StatsClientException;
 import ru.practicum.explore.client.exceptions.StatusValidator;
 
 import java.net.URI;
@@ -46,8 +47,11 @@ public class StatsClient {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             StatusValidator.validate(response, 201);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new StatsClientException("Error while sending hit to stats service", e);
         } catch (Exception e) {
-            throw new RuntimeException("Error while sending hit to stats service", e);
+            throw new StatsClientException("Error while sending hit to stats service", e);
         }
     }
 
@@ -76,8 +80,11 @@ public class StatsClient {
                     httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             StatusValidator.validate(response, 200);
             return objectMapper.readValue(response.body(), new TypeReference<List<ViewStats>>() {});
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new StatsClientException("Ошибка при получении статистики", e);
         } catch (Exception e) {
-            throw new RuntimeException("Ошибка при получении статистики", e);
+            throw new StatsClientException("Ошибка при получении статистики", e);
         }
     }
 
