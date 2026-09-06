@@ -505,7 +505,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$rEventFullDtoef": "#/components/schemas/EventFullDto"
+                    "$ref": "#/components/schemas/EventFullDto"
                   }
                 }
               }

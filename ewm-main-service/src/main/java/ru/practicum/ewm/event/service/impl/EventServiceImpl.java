@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.repository.CategoryRepository;
-import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.AdminStateAction;
@@ -27,6 +26,7 @@ import ru.practicum.ewmstats.dto.ViewStats;
 import ru.practicum.explore.client.StatsClient;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -140,6 +140,9 @@ public class EventServiceImpl implements EventService {
             if (event.getState() != State.PENDING) {
                 throw new ConflictException("Cannot publish the event because it's not in the right state: " + event.getState());
             }
+            if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+                throw new ConflictException("Дата начала события должна быть не ранее чем за час от даты публикации");
+            }
             event.setState(PUBLISHED);
             event.setPublishedOn(LocalDateTime.now());
         }
@@ -185,6 +188,7 @@ public class EventServiceImpl implements EventService {
                 ? Sort.unsorted()
                 : Sort.by(Sort.Direction.ASC, "eventDate");
 
+
         Pageable pageable = PageRequest.of(from / size, size, sortOrder);
 
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
@@ -203,12 +207,18 @@ public class EventServiceImpl implements EventService {
         Map<String, Long> viewsByUri = stats.stream()
                 .collect(Collectors.toMap(ViewStats::getUri, ViewStats::getHits));
 
-        return events.stream()
+        List<EventShortDto> result = events.stream()
                 .map(event -> {
                     Long views = viewsByUri.getOrDefault("/events/" + event.getId(), 0L);
                     return EventMapper.toEventShortDto(event, views, 0L);
                 })
                 .collect(Collectors.toList());
+
+        if ("VIEWS".equalsIgnoreCase(sort)) {
+            result.sort(Comparator.comparing(EventShortDto::getViews).reversed());
+        }
+
+        return result;
     }
 
     @Override

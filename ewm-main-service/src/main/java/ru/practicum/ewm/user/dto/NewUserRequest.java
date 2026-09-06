@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class NewUserRequest{
+public class NewUserRequest {
     @NotBlank
     @Size(max = 254, min = 6)
     @Email

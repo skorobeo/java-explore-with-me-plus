@@ -1,11 +1,11 @@
-    package ru.practicum.ewm;
+package ru.practicum.ewm;
 
-    import org.springframework.boot.SpringApplication;
-    import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-    @SpringBootApplication
-    public class EwmMainService {
-        public static void main(String[] args) {
+@SpringBootApplication(scanBasePackages = {"ru.practicum.ewm", "ru.practicum.explore.client"})
+public class EwmMainService {
+    public static void main(String[] args) {
             SpringApplication.run(EwmMainService.class, args);
         }
-    }
+}

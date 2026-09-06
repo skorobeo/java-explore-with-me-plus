@@ -35,7 +35,7 @@ public class Event {
     @Column(name = "published_on")
     private LocalDateTime publishedOn;
 
-    @Column(name ="paid", nullable = false)
+    @Column(name = "paid", nullable = false)
     private Boolean paid;
 
     @Column(name = "participant_limit", nullable = false)
