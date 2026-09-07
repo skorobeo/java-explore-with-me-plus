@@ -1,9 +1,10 @@
-package ru.practicum.ewm.main.dto.request;
+package ru.practicum.ewm.request.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.practicum.ewm.request.model.RequestStatusAction;
 
 import java.util.List;
 
