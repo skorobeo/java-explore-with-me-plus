@@ -2,6 +2,8 @@ package ru.practicum.ewm.request.repository;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ru.practicum.ewm.request.model.ParticipationRequest;
 import ru.practicum.ewm.request.model.ParticipationRequestStatus;
 
@@ -23,4 +25,13 @@ public interface ParticipationRequestRepository extends JpaRepository<Participat
     long countByEventIdAndStatus(Long eventId, ParticipationRequestStatus status);
 
     List<ParticipationRequest> findAllByEventIdAndStatus(Long eventId, ParticipationRequestStatus status);
+
+    @Query("""
+        select r.event.id, count(r)
+        from ParticipationRequest r
+        where r.event.id in :eventIds
+        and r.status = 'CONFIRMED'
+        group by r.event.id
+        """)
+    List<Object[]> countConfirmedByEventIds(@Param("eventIds") List<Long> eventIds);
 }
