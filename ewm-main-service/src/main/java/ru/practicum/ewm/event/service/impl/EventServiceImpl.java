@@ -123,6 +123,10 @@ public class EventServiceImpl implements EventService {
             event.setEventDate(request.getEventDate());
         }
 
+        if (request.getTitle() != null) {
+            event.setTitle(request.getTitle());
+        }
+
         if (request.getPaid() != null) {
             event.setPaid(request.getPaid());
         }
