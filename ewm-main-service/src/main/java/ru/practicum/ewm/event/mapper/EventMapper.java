@@ -57,9 +57,10 @@ public class EventMapper {
         event.setTitle(dto.getTitle());
         event.setEventDate(dto.getEventDate());
         event.setCreatedOn(LocalDateTime.now());
-        event.setPaid(dto.getPaid());
-        event.setParticipantLimit(dto.getParticipantLimit());
-        event.setRequestModeration(dto.getRequestModeration());
+        event.setPaid(Boolean.TRUE.equals(dto.getPaid()));
+        event.setParticipantLimit(dto.getParticipantLimit() != null ? dto.getParticipantLimit() : 0);
+        event.setRequestModeration(dto.getRequestModeration() == null
+                || dto.getRequestModeration());
         event.setState(State.PENDING);
         event.setLocation(LocationMapper.toLocation(dto.getLocation()));
         event.setCategory(category);

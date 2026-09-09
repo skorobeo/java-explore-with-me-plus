@@ -122,7 +122,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         for (ParticipationRequest request : requests) {
             if (!request.getEvent().getId().equals(eventId)
                     || request.getStatus() != ParticipationRequestStatus.PENDING) {
-                throw new BadRequestException("Request must have status PENDING");
+                throw new ConflictException("Request must have status PENDING");
             }
         }
 
