@@ -17,6 +17,7 @@ import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.event.model.StateAction;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.location.mapper.LocationMapper;
@@ -99,6 +100,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto patchAdminEventsId(Long eventId, UpdateEventAdminRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
@@ -139,7 +141,7 @@ public class EventServiceImpl implements EventService {
 
         if (request.getEventDate() != null &&
                 request.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new ConflictException("Дата начала события должна быть не ранее чем за час от даты публикации");
+            throw new BadRequestException("Дата начала события должна быть не ранее чем за час от даты публикации");
         }
 
         if (request.getStateAction() == AdminStateAction.PUBLISH_EVENT) {
@@ -147,7 +149,7 @@ public class EventServiceImpl implements EventService {
                 throw new ConflictException("Cannot publish the event because it's not in the right state: " + event.getState());
             }
             if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-                throw new ConflictException("Дата начала события должна быть не ранее чем за час от даты публикации");
+                throw new BadRequestException("Дата начала события должна быть не ранее чем за час от даты публикации");
             }
             event.setState(PUBLISHED);
             event.setPublishedOn(LocalDateTime.now());
@@ -167,6 +169,9 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEvents(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, int from, int size) {
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new BadRequestException("rangeStart не может быть позже rangeEnd");
+        }
         Specification<Event> spec = (root, query, cb) -> cb.equal(root.get("state"), State.PUBLISHED);
 
         if (text != null && !text.isBlank()) {
@@ -293,7 +298,7 @@ public class EventServiceImpl implements EventService {
     Category category = categoryRepository.findById(dto.getCategory())
             .orElseThrow(() -> new NotFoundException("Категория с id=" + dto.getCategory() + " не найдена"));
         if (dto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Event date must be at least 2 hours from now");
+            throw new BadRequestException("Event date must be at least 2 hours from now");
         }
         Event savedEvent = eventRepository.save(EventMapper.toEvent(dto, category, user));
         return EventMapper.toEventFullDto(savedEvent, 0L, 0L);
@@ -332,7 +337,7 @@ public class EventServiceImpl implements EventService {
         }
         if (updateEventUserRequest.getEventDate() != null &&
                 updateEventUserRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Дата события не может быть раньше чем через 2 часа от текущего момента");
+            throw new BadRequestException("Дата события не может быть раньше чем через 2 часа от текущего момента");
         }
         if (updateEventUserRequest.getTitle() != null) {
             event.setTitle(updateEventUserRequest.getTitle());
