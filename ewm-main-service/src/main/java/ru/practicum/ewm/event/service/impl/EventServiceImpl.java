@@ -24,6 +24,8 @@ import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
 import ru.practicum.ewmstats.dto.ViewStats;
 import ru.practicum.explore.client.StatsClient;
+import ru.practicum.ewm.request.model.ParticipationRequestStatus;
+import ru.practicum.ewm.request.repository.ParticipationRequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -41,6 +43,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
     private final StatsClient statsClient;
+    private final ParticipationRequestRepository participationRequestRepository;
 
 
     @Override
@@ -84,10 +87,13 @@ public class EventServiceImpl implements EventService {
         Map<String, Long> viewsByUri = stats.stream()
                 .collect(Collectors.toMap(ViewStats::getUri, ViewStats::getHits));
 
+        Map<Long, Long> confirmedRequests = getConfirmedRequestsMap(events);
+
         return events.stream()
                 .map(event ->  {
                     Long views = viewsByUri.getOrDefault("/events/" + event.getId(), 0L);
-                    return EventMapper.toEventFullDto(event, views, 0L);
+                    return EventMapper.toEventFullDto(event, views,
+                            confirmedRequests.getOrDefault(event.getId(), 0L));
                 })
                 .collect(Collectors.toList());
     }
@@ -155,7 +161,8 @@ public class EventServiceImpl implements EventService {
         }
 
 
-        return EventMapper.toEventFullDto(eventRepository.save(event), 0L, 0L);
+        Event saved = eventRepository.save(event);
+        return EventMapper.toEventFullDto(saved, 0L, getConfirmedRequests(saved.getId()));
     }
 
     @Override
@@ -207,10 +214,15 @@ public class EventServiceImpl implements EventService {
         Map<String, Long> viewsByUri = stats.stream()
                 .collect(Collectors.toMap(ViewStats::getUri, ViewStats::getHits));
 
+        Map<Long, Long> confirmedRequests = getConfirmedRequestsMap(events);
+
         List<EventShortDto> result = events.stream()
+                .filter(event -> !Boolean.TRUE.equals(onlyAvailable)
+                        || isAvailable(event, confirmedRequests))
                 .map(event -> {
                     Long views = viewsByUri.getOrDefault("/events/" + event.getId(), 0L);
-                    return EventMapper.toEventShortDto(event, views, 0L);
+                    return EventMapper.toEventShortDto(event, views,
+                            confirmedRequests.getOrDefault(event.getId(), 0L));
                 })
                 .collect(Collectors.toList());
 
@@ -240,7 +252,7 @@ public class EventServiceImpl implements EventService {
                 .map(ViewStats::getHits)
                 .orElse(0L);
 
-        return EventMapper.toEventFullDto(event, views, 0L);
+        return EventMapper.toEventFullDto(event, views, getConfirmedRequests(event.getId()));
     }
 
     @Override
@@ -262,10 +274,13 @@ public class EventServiceImpl implements EventService {
         Map<String, Long> viewsByUri = stats.stream()
                 .collect(Collectors.toMap(ViewStats::getUri, ViewStats::getHits));
 
+        Map<Long, Long> confirmedRequests = getConfirmedRequestsMap(events);
+
         return events.stream()
                 .map(event -> {
                     Long views = viewsByUri.getOrDefault("/events/" + event.getId(), 0L);
-                    return EventMapper.toEventShortDto(event, views, 0L);
+                    return EventMapper.toEventShortDto(event, views,
+                            confirmedRequests.getOrDefault(event.getId(), 0L));
                 })
                 .collect(Collectors.toList());
     }
@@ -301,7 +316,7 @@ public class EventServiceImpl implements EventService {
                 .map(ViewStats::getHits)
                 .orElse(0L);
 
-        return EventMapper.toEventFullDto(event, views, 0L);
+        return EventMapper.toEventFullDto(event, views, getConfirmedRequests(event.getId()));
     }
 
     @Transactional
@@ -363,7 +378,36 @@ public class EventServiceImpl implements EventService {
         if (updateEventUserRequest.getStateAction() == StateAction.CANCEL_REVIEW) {
             event.setState(CANCELED);
         }
-        return EventMapper.toEventFullDto(eventRepository.save(event), 0L, 0L);
+        Event saved = eventRepository.save(event);
+        return EventMapper.toEventFullDto(saved, 0L, getConfirmedRequests(saved.getId()));
+    }
+
+    private Map<Long, Long> getConfirmedRequestsMap(List<Event> events) {
+        List<Long> ids = events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        List<Object[]> counts = participationRequestRepository.countConfirmedByEventIds(ids);
+        return counts.stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0],
+                        arr -> (Long) arr[1]
+                ));
+    }
+
+    private long getConfirmedRequests(Long eventId) {
+        return participationRequestRepository.countByEventIdAndStatus(eventId,
+                ParticipationRequestStatus.CONFIRMED);
+    }
+
+    private boolean isAvailable(Event event, Map<Long, Long> confirmedRequests) {
+        long limit = event.getParticipantLimit();
+        if (limit == 0) {
+            return true;
+        }
+        return confirmedRequests.getOrDefault(event.getId(), 0L) < limit;
     }
 
 }
