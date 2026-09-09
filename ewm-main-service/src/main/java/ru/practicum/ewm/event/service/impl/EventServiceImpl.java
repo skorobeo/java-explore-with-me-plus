@@ -249,7 +249,7 @@ public class EventServiceImpl implements EventService {
                 LocalDateTime.of(2000, 1, 1, 0, 0),
                 LocalDateTime.now(),
                 List.of("/events/" + event.getId()),
-                false
+                true
         );
 
         Long views = stats.stream()
