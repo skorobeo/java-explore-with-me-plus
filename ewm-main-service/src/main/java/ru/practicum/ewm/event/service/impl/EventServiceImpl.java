@@ -601,7 +601,7 @@ public class EventServiceImpl implements EventService {
                 STATS_HISTORY_START,
                 LocalDateTime.now(),
                 uris,
-                false);
+                true);
 
         return stats.stream()
                 .collect(Collectors.toMap(
@@ -614,7 +614,7 @@ public class EventServiceImpl implements EventService {
                 STATS_HISTORY_START,
                 LocalDateTime.now(),
                 List.of(EVENTS_URI_PREFIX + eventId),
-                false);
+                true);
 
         return stats.stream()
                 .findFirst()
