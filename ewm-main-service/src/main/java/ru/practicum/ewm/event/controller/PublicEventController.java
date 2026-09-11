@@ -1,14 +1,11 @@
 package ru.practicum.ewm.event.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.service.EventService;
-import ru.practicum.ewmstats.dto.EndpointHit;
-import ru.practicum.explore.client.StatsClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicEventController {
     private final EventService eventService;
-    private final StatsClient statsClient;
 
     @GetMapping
     public List<EventShortDto> getEvents(
@@ -30,30 +26,12 @@ public class PublicEventController {
             @RequestParam(required = false) Boolean onlyAvailable,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int from,
-            @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
-
-        EndpointHit endpointHit = EndpointHit.builder()
-                .app("ewm-main-service")
-                .uri(request.getRequestURI())
-                .ip(request.getRemoteAddr())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        statsClient.saveHit(endpointHit);
+            @RequestParam(defaultValue = "10") int size) {
         return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
     }
 
     @GetMapping("/{id}")
-    public EventFullDto getEventById(@PathVariable Long id, HttpServletRequest request) {
-        EndpointHit endpointHit = EndpointHit.builder()
-                .app("ewm-main-service")
-                .uri(request.getRequestURI())
-                .ip(request.getRemoteAddr())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        statsClient.saveHit(endpointHit);
+    public EventFullDto getEventById(@PathVariable Long id) {
         return eventService.getPublicEventById(id);
     }
-
 }

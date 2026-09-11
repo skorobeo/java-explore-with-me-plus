@@ -53,6 +53,7 @@ public class EventServiceImpl implements EventService {
 
     private static final String APP_NAME = "ewm-main-service";
     private static final String EVENTS_URI_PREFIX = "/events/";
+    private static final String EVENTS_URI = "/events";
     private static final LocalDateTime STATS_HISTORY_START =
             LocalDateTime.of(2000, 1, 1, 0, 0);
 
@@ -235,6 +236,7 @@ public class EventServiceImpl implements EventService {
             int size) {
 
         validateDateRange(rangeStart, rangeEnd);
+        registerHit(EVENTS_URI);
 
         Specification<Event> spec =
                 (root, query, cb) -> cb.equal(
@@ -338,7 +340,7 @@ public class EventServiceImpl implements EventService {
                     "Событие с id=" + id + " не найдено");
         }
 
-        registerView(id);
+        registerHit(EVENTS_URI_PREFIX + id);
 
         Long views = getViewsForOneEvent(id);
         Long confirmed = getConfirmedRequestsForOneEvent(id);
@@ -545,21 +547,19 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-
-    private void registerView(Long eventId) {
+    private void registerHit(String uri) {
         ServletRequestAttributes attributes =
                 (ServletRequestAttributes) RequestContextHolder
                         .getRequestAttributes();
 
         if (attributes == null) {
             log.warn("Не удалось получить атрибуты запроса для "
-                    + "регистрации просмотра события id={}", eventId);
+                    + "регистрации хита uri={}", uri);
             return;
         }
 
         HttpServletRequest request = attributes.getRequest();
         String ip = resolveClientIp(request);
-        String uri = EVENTS_URI_PREFIX + eventId;
         LocalDateTime timestamp = LocalDateTime.now();
 
         EndpointHit hit = new EndpointHit();
@@ -657,7 +657,6 @@ public class EventServiceImpl implements EventService {
 
         return views;
     }
-
 
     private LocalDateTime statsEndTime() {
         return LocalDateTime.now().plusSeconds(1);
