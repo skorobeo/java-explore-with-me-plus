@@ -3,9 +3,6 @@ package ru.practicum.ewm.event.service.impl;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -358,12 +355,7 @@ public class EventServiceImpl implements EventService {
             int from,
             int size) {
 
-        Pageable pageable = PageRequest.of(from / size, size);
-        Page<Event> page = eventRepository.findByInitiatorId(
-                userId,
-                pageable);
-
-        List<Event> events = page.getContent();
+        List<Event> events = eventRepository.findByInitiatorId(userId);
 
         if (events.isEmpty()) {
             return List.of();
@@ -373,13 +365,15 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> confirmedRequests =
                 getConfirmedRequestsMap(events);
 
-        return events.stream()
+        List<EventShortDto> result = events.stream()
                 .map(event -> EventMapper.toEventShortDto(
                         event,
                         viewsByUri.getOrDefault(
                                 EVENTS_URI_PREFIX + event.getId(), 0L),
                         confirmedRequests.getOrDefault(event.getId(), 0L)))
                 .collect(Collectors.toList());
+
+        return paginateShort(result, from, size);
     }
 
     @Override
