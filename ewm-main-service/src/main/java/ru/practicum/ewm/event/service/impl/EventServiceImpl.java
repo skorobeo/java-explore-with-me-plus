@@ -331,7 +331,6 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional
     public EventFullDto getPublicEventById(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(
