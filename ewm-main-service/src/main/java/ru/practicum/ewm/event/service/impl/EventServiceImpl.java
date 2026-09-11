@@ -105,27 +105,34 @@ public class EventServiceImpl implements EventService {
         if (request.getAnnotation() != null) {
             event.setAnnotation(request.getAnnotation());
         }
+
         if (request.getCategory() != null) {
             Category category = categoryRepository.findById(request.getCategory())
                     .orElseThrow(() -> new NotFoundException(
                             "Категория с id=" + request.getCategory() + " не найдена"));
             event.setCategory(category);
         }
+
         if (request.getDescription() != null) {
             event.setDescription(request.getDescription());
         }
+
         if (request.getEventDate() != null) {
             event.setEventDate(request.getEventDate());
         }
+
         if (request.getPaid() != null) {
             event.setPaid(request.getPaid());
         }
+
         if (request.getLocation() != null) {
             event.setLocation(LocationMapper.toLocation(request.getLocation()));
         }
+
         if (request.getParticipantLimit() != null) {
             event.setParticipantLimit(request.getParticipantLimit());
         }
+
         if (request.getRequestModeration() != null) {
             event.setRequestModeration(request.getRequestModeration());
         }
@@ -146,6 +153,7 @@ public class EventServiceImpl implements EventService {
             event.setState(PUBLISHED);
             event.setPublishedOn(LocalDateTime.now());
         }
+
         if (request.getStateAction() == AdminStateAction.REJECT_EVENT) {
             if (event.getState() == State.PUBLISHED) {
                 throw new ConflictException("Cannot reject the event because it's already published");
