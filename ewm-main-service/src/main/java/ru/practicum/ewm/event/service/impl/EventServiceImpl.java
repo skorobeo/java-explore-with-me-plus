@@ -637,7 +637,7 @@ public class EventServiceImpl implements EventService {
                 STATS_HISTORY_START,
                 statsEndTime(),
                 uris,
-                true);
+                false);
 
         return stats.stream()
                 .collect(Collectors.toMap(
@@ -653,7 +653,7 @@ public class EventServiceImpl implements EventService {
                 STATS_HISTORY_START,
                 statsEndTime(),
                 List.of(uri),
-                true);
+                false);
 
         long views = stats.stream()
                 .mapToLong(ViewStats::getHits)
