@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Entity
 @Table(name = "category")
 public class Category {
