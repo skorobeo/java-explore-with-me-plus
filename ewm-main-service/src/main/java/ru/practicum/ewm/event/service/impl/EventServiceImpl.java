@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.service.impl;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,7 @@ import static ru.practicum.ewm.event.model.State.CANCELED;
 import static ru.practicum.ewm.event.model.State.PENDING;
 import static ru.practicum.ewm.event.model.State.PUBLISHED;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -56,6 +58,9 @@ public class EventServiceImpl implements EventService {
     private static final String EVENTS_URI_PREFIX = "/events/";
     private static final LocalDateTime STATS_HISTORY_START =
             LocalDateTime.of(2000, 1, 1, 0, 0);
+
+    private static final String HEADER_X_FORWARDED_FOR = "X-Forwarded-For";
+    private static final String HEADER_X_REAL_IP = "X-Real-IP";
 
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -326,6 +331,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto getPublicEventById(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(
@@ -546,24 +552,66 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+    /**
+     * Сохраняет хит о просмотре события в stats-service.
+     * IP берётся из заголовков X-Forwarded-For / X-Real-IP,
+     * чтобы за прокси/балансировщиком получать реальный IP клиента,
+     * а не IP прокси (иначе ломается подсчёт уникальных просмотров).
+     */
     private void registerView(Long eventId) {
         ServletRequestAttributes attributes =
                 (ServletRequestAttributes) RequestContextHolder
                         .getRequestAttributes();
 
         if (attributes == null) {
+            log.warn("Не удалось получить атрибуты запроса для "
+                    + "регистрации просмотра события id={}", eventId);
             return;
         }
 
         HttpServletRequest request = attributes.getRequest();
+        String ip = resolveClientIp(request);
+        String uri = EVENTS_URI_PREFIX + eventId;
+        LocalDateTime timestamp = LocalDateTime.now();
 
         EndpointHit hit = new EndpointHit();
         hit.setApp(APP_NAME);
-        hit.setUri(EVENTS_URI_PREFIX + eventId);
-        hit.setIp(request.getRemoteAddr());
-        hit.setTimestamp(LocalDateTime.now());
+        hit.setUri(uri);
+        hit.setIp(ip);
+        hit.setTimestamp(timestamp);
 
-        statsClient.saveHit(hit);
+        log.debug("saveHit app={} uri={} ip={} ts={}",
+                APP_NAME, uri, ip, timestamp);
+
+        try {
+            statsClient.saveHit(hit);
+        } catch (Exception e) {
+            // Просмотр не должен ломать основной запрос,
+            // даже если stats-service недоступен.
+            log.error("Не удалось сохранить хит для uri={} ip={}: {}",
+                    uri, ip, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Определяет IP клиента с учётом прокси.
+     * Порядок: X-Forwarded-For -> X-Real-IP -> remoteAddr.
+     */
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader(HEADER_X_FORWARDED_FOR);
+
+        if (forwarded != null && !forwarded.isBlank()) {
+            // X-Forwarded-For может содержать цепочку: client, proxy1, proxy2
+            return forwarded.split(",")[0].trim();
+        }
+
+        String realIp = request.getHeader(HEADER_X_REAL_IP);
+
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+
+        return request.getRemoteAddr();
     }
 
     private List<EventShortDto> paginateShort(
@@ -599,27 +647,41 @@ public class EventServiceImpl implements EventService {
 
         List<ViewStats> stats = statsClient.getStats(
                 STATS_HISTORY_START,
-                LocalDateTime.now(),
+                statsEndTime(),
                 uris,
                 true);
 
         return stats.stream()
                 .collect(Collectors.toMap(
                         ViewStats::getUri,
-                        ViewStats::getHits));
+                        ViewStats::getHits,
+                        Long::sum));
     }
 
     private Long getViewsForOneEvent(Long eventId) {
+        String uri = EVENTS_URI_PREFIX + eventId;
+
         List<ViewStats> stats = statsClient.getStats(
                 STATS_HISTORY_START,
-                LocalDateTime.now(),
-                List.of(EVENTS_URI_PREFIX + eventId),
+                statsEndTime(),
+                List.of(uri),
                 true);
 
-        return stats.stream()
-                .findFirst()
-                .map(ViewStats::getHits)
-                .orElse(0L);
+        long views = stats.stream()
+                .mapToLong(ViewStats::getHits)
+                .sum();
+
+        log.debug("getStats uri={} unique=true -> views={}", uri, views);
+
+        return views;
+    }
+
+    /**
+     * Небольшой запас по времени, чтобы только что сохранённый хит
+     * гарантированно попал в окно выборки stats-service.
+     */
+    private LocalDateTime statsEndTime() {
+        return LocalDateTime.now().plusSeconds(1);
     }
 
     private Map<Long, Long> getConfirmedRequestsMap(
