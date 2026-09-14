@@ -1,6 +1,5 @@
 package ru.practicum.ewm.comment.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,9 +19,9 @@ public class CommentDto {
 
     private LocalDateTime created;
 
+    private LocalDateTime updated;
+
     private Long eventId;
 
     private UserShortDto author;
-
-
 }
