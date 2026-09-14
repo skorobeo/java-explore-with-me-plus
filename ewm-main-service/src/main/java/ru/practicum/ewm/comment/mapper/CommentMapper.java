@@ -24,6 +24,7 @@ public class CommentMapper {
         dto.setId(comment.getId());
         dto.setText(comment.getText());
         dto.setCreated(comment.getCreated());
+        dto.setUpdated(comment.getUpdated());
         dto.setEventId(comment.getEvent().getId());
         dto.setAuthor(UserMapper.toUserShortDto(comment.getAuthor()));
         return dto;
