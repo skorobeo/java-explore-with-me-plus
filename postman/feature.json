@@ -412,7 +412,8 @@
                   "pm.test(\"All items have text and authorName\", function () {\r",
                   "    pm.response.json().forEach(c => {\r",
                   "        pm.expect(c).to.have.property(\"text\");\r",
-                  "        pm.expect(c).to.have.property(\"authorName\");\r",
+                  "        pm.expect(c).to.have.property(\"author\");\r",
+                  "        pm.expect(c.author).to.have.property(\"name\");\r",
                   "    });\r",
                   "});"
                 ],
@@ -530,8 +531,7 @@
                   "pm.test(\"Status code is 204\", function () {\r",
                   "    pm.response.to.have.status(204);\r",
                   "});\r",
-                  "\r",
-                  "pm.collectionVariables.unset(\"commentId\");"
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1070,7 +1070,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": ""
+      "value": "http://localhost:8080"
     },
     {
       "key": "userId",
