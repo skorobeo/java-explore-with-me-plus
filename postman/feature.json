@@ -150,14 +150,15 @@
                   "    pm.response.to.have.status(201);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"Response has id, text, authorName, created\", function () {\r",
+                  "pm.test(\"Response has id, text, author, created\", function () {\r",
                   "    const json = pm.response.json();\r",
                   "    pm.expect(json).to.have.property(\"id\");\r",
                   "    pm.expect(json).to.have.property(\"text\");\r",
-                  "    pm.expect(json).to.have.property(\"authorName\");\r",
+                  "    pm.expect(json).to.have.property(\"author\");\r",
+                  "    pm.expect(json.author).to.have.property(\"id\");\r",
+                  "    pm.expect(json.author).to.have.property(\"name\");\r",
                   "    pm.expect(json).to.have.property(\"created\");\r",
                   "});\r",
-                  "\r",
                   "pm.test(\"Text matches request\", function () {\r",
                   "    pm.expect(pm.response.json().text).to.eql(\"Отличное событие, всем рекомендую!\");\r",
                   "});\r",
@@ -351,16 +352,23 @@
                   "    pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"Deleted comment is not in the list\", function () {\r",
-                  "    const deletedId = Number(pm.environment.get(\"commentId\"));\r",
+                  "pm.test(\"Deleted comment is not in list\", function () {\r",
+                  "    const deletedId = Number(pm.collectionVariables.get(\"commentId\"));\r",
                   "    const ids = pm.response.json().map(c => c.id);\r",
-                  "    pm.expect(ids, `Deleted comment id=${deletedId} should not be present`)\r",
-                  "            .to.not.include(deletedId);\r",
-                  "});"
+                  "    pm.expect(ids).to.not.include(deletedId);\r",
+                  "});\r",
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
                 "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
               }
             }
           ],
@@ -388,9 +396,71 @@
       "item": [
         {
           "name": "Get events comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is an array\", function () {\r",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"All items have text and authorName\", function () {\r",
+                  "    pm.response.json().forEach(c => {\r",
+                  "        pm.expect(c).to.have.property(\"text\");\r",
+                  "        pm.expect(c).to.have.property(\"authorName\");\r",
+                  "    });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Если commentId не задан, создаём комментарий\r",
+                  "if (!pm.collectionVariables.get(\"commentId\")) {\r",
+                  "    const createRequest = {\r",
+                  "        url: pm.collectionVariables.get(\"baseUrl\") + \"/users/\" + pm.collectionVariables.get(\"userId\") +\r",
+                  "             \"/comments?eventId=\" + pm.collectionVariables.get(\"eventId\"),\r",
+                  "        method: \"POST\",\r",
+                  "        header: {\"Content-Type\": \"application/json\"},\r",
+                  "        body: {mode: \"raw\", raw: JSON.stringify({text: \"Комментарий для Public-теста\"})}\r",
+                  "    };\r",
+                  "    pm.sendRequest(createRequest, (err, res) => {\r",
+                  "        if (!err && res.code === 201) {\r",
+                  "            pm.collectionVariables.set(\"commentId\", res.json().id);\r",
+                  "        }\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                "{{eventId}}",
+                "comments"
+              ]
+            }
           },
           "response": []
         }
@@ -462,6 +532,27 @@
                   "});\r",
                   "\r",
                   "pm.collectionVariables.unset(\"commentId\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({\r",
+                  "    url: pm.collectionVariables.get(\"baseUrl\") + \"/users/\" + pm.collectionVariables.get(\"userId\") +\r",
+                  "         \"/comments?eventId=\" + pm.collectionVariables.get(\"eventId\"),\r",
+                  "    method: \"POST\",\r",
+                  "    header: {\"Content-Type\": \"application/json\"},\r",
+                  "    body: {mode: \"raw\", raw: JSON.stringify({text: \"Комментарий для админского удаления\"})}\r",
+                  "}, (err, res) => {\r",
+                  "    if (!err && res.code === 201) {\r",
+                  "        pm.collectionVariables.set(\"commentId\", res.json().id);\r",
+                  "    }\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -770,6 +861,29 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"commentId\")) {\r",
+                  "    pm.sendRequest({\r",
+                  "        url: pm.collectionVariables.get(\"baseUrl\") + \"/users/\" + pm.collectionVariables.get(\"userId\") +\r",
+                  "             \"/comments?eventId=\" + pm.collectionVariables.get(\"eventId\"),\r",
+                  "        method: \"POST\",\r",
+                  "        header: {\"Content-Type\": \"application/json\"},\r",
+                  "        body: {mode: \"raw\", raw: JSON.stringify({text: \"Комментарий для проверки прав\"})}\r",
+                  "    }, (err, res) => {\r",
+                  "        if (!err && res.code === 201) {\r",
+                  "            pm.collectionVariables.set(\"commentId\", res.json().id);\r",
+                  "        }\r",
+                  "    });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
           "request": {
@@ -844,6 +958,29 @@
                   "pm.test(\"Status code is 403 or 404\", function () {\r",
                   "    pm.expect(pm.response.code).to.be.oneOf([403, 404]);\r",
                   "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"commentId\")) {\r",
+                  "    pm.sendRequest({\r",
+                  "        url: pm.collectionVariables.get(\"baseUrl\") + \"/users/\" + pm.collectionVariables.get(\"userId\") +\r",
+                  "             \"/comments?eventId=\" + pm.collectionVariables.get(\"eventId\"),\r",
+                  "        method: \"POST\",\r",
+                  "        header: {\"Content-Type\": \"application/json\"},\r",
+                  "        body: {mode: \"raw\", raw: JSON.stringify({text: \"Комментарий для проверки прав\"})}\r",
+                  "    }, (err, res) => {\r",
+                  "        if (!err && res.code === 201) {\r",
+                  "            pm.collectionVariables.set(\"commentId\", res.json().id);\r",
+                  "        }\r",
+                  "    });\r",
+                  "}"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -961,6 +1098,10 @@
     },
     {
       "key": "longText",
+      "value": ""
+    },
+    {
+      "key": "commentId",
       "value": ""
     }
   ]
