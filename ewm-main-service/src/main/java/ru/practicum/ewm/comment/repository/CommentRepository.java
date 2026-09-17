@@ -11,16 +11,16 @@ import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    @EntityGraph(attributePaths = {"author"})
+    @EntityGraph(attributePaths = {"author", "event"})
     Page<Comment> findByEventId(Long eventId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author"})
+    @EntityGraph(attributePaths = {"author", "event"})
     Page<Comment> findByAuthorId(Long authorId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author"})
+    @EntityGraph(attributePaths = {"author", "event"})
     Optional<Comment> findByIdAndAuthorId(Long id, Long authorId);
 
-    @EntityGraph(attributePaths = {"author"})
+    @EntityGraph(attributePaths = {"author", "event"})
     @Query("select c from Comment c")
     Page<Comment> findAllWithAuthor(Pageable pageable);
 }

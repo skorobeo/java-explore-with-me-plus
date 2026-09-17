@@ -1,4 +1,3 @@
-
 package ru.practicum.ewm.comment.service.impl;
 
 import lombok.RequiredArgsConstructor;
@@ -89,11 +88,13 @@ public class CommentServiceImpl implements CommentService {
                     "Пользователь с id=" + userId + " не найден");
         }
 
-        Pageable pageable = PageRequest.of(from / size, size);
+        Pageable pageable = PageRequest.of(0, from + size);
 
         return commentRepository.findByAuthorId(userId, pageable)
                 .getContent()
                 .stream()
+                .skip(from)
+                .limit(size)
                 .map(CommentMapper::toCommentDto)
                 .collect(Collectors.toList());
     }
@@ -105,22 +106,26 @@ public class CommentServiceImpl implements CommentService {
                     "Событие с id=" + eventId + " не найдено");
         }
 
-        Pageable pageable = PageRequest.of(from / size, size);
+        Pageable pageable = PageRequest.of(0, from + size);
 
         return commentRepository.findByEventId(eventId, pageable)
                 .getContent()
                 .stream()
+                .skip(from)
+                .limit(size)
                 .map(CommentMapper::toCommentDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<CommentDto> getAdminComments(int from, int size) {
-        Pageable pageable = PageRequest.of(from / size, size);
+        Pageable pageable = PageRequest.of(0, from + size);
 
         return commentRepository.findAllWithAuthor(pageable)
                 .getContent()
                 .stream()
+                .skip(from)
+                .limit(size)
                 .map(CommentMapper::toCommentDto)
                 .collect(Collectors.toList());
     }
@@ -133,6 +138,5 @@ public class CommentServiceImpl implements CommentService {
                         "Комментарий с id=" + commentId + " не найден"));
 
         commentRepository.delete(comment);
-
     }
 }
